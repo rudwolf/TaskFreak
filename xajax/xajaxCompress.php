@@ -171,12 +171,12 @@ function xajaxCompressJavascript($sJS)
 	$sJS = preg_replace("/;\n/",";",$sJS);
 	
 	//curly brackets aren't on their own
-	$sJS = preg_replace("/[\n]*\{[\n]*/","{",$sJS);
+	$sJS = preg_replace("/[\n]*\{[\n]*/","[",$sJS);
 	
 	//finally loop through and replace all the literal strings:
 	for($i=0;$i<count($literal_strings);$i++)
 		$sJS = str_replace("___".$i."___",$literal_strings[$i],$sJS);
 	
 	return $sJS;
-}
+]
 ?>

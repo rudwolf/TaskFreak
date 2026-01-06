@@ -104,28 +104,44 @@ class Project extends TznDb
 	function check() {
 		return $this->checkEmpty('name');
 	}
-	
-	function add($status,$userId) {
-		if (parent::add()) {
-            // add poroject initial status
-			if ($this->setStatus($status,$userId)) {
-                // add user as project leader
-                $objLeader = new MemberProject();
-                $objLeader->initObjectProperties();
-                $objLeader->project->id = $this->id;
-                $objLeader->member->id = $userId;
-                $objLeader->position = FRK_PROJECT_LEADER; // leader
-                return $objLeader->add();
-            } else {
-                // -TODO- rollback
-                return false;
-            }
+
+	function add($ignore = false, $status = null, $userId = null)
+	{
+		// If called with the old signature (add($status, $userId))
+		if ($ignore !== false && $status === null) {
+			$status = $ignore;
+			$ignore = false;
+
+			if ($userId === null && func_num_args() > 1) {
+				$userId = func_get_arg(1);
+			}
+		}
+
+		// Make sure we have status and userId
+		if ($status === null || $userId === null) {
+			return parent::add($ignore);
+		}
+
+		if (parent::add($ignore)) {
+			// add project initial status
+			if ($this->setStatus($status, $userId)) {
+				// add user as project leader
+				$objLeader = new MemberProject();
+				$objLeader->initObjectProperties();
+				$objLeader->project->id = $this->id;
+				$objLeader->member->id = $userId;
+				$objLeader->position = FRK_PROJECT_LEADER; // leader
+				return $objLeader->add();
+			} else {
+				// -TODO- rollback
+				return false;
+			}
 		} else {
 			return false;
 		}
 	}
 	
-	function delete() {
+	function delete($filter = null) {
 		if ($this->id) {
 			$this->getConnection();
 			if (@constant('FRK_MYSQL_VERSION_GT_4_1')) {
@@ -202,17 +218,17 @@ class ProjectStats extends Project
         unset($this->memberProject);
     }
 
-    function add($status,$userId) {
+    function add($ignore = false, $status = null, $userId = null) {
         $this->_cleanProperties();
         return parent::add($status,$userId);
     }
 	
-    function update($param='') {
+    function update($param='', $filter = null) {
         $this->_cleanProperties();
         parent::update($param);
     }
 
-    function load($userId, $strict=true) {
+    function load($userId = null, $strict = true) {
         if (!$this->id) {
             return false;
         }
@@ -245,7 +261,7 @@ class ProjectStats extends Project
         return $this->loadByQuery($sqlSelect);
     }
 	
-	function loadList($userId, $strict=true) {
+	function loadList($userId = null, $strict = true) {
         $sqlCommon = 'FROM '.$this->gTable().' AS pp '
             .'INNER JOIN '.$this->gTable('projectStatus').' AS ps ON ps.projectId = pp.projectId '
             .(($strict)?'INNER':'LEFT').' JOIN '.$this->gTable('memberProject')
@@ -286,7 +302,7 @@ class ProjectStatsFull extends ProjectStats
 		print $this->projectStatus->getStatus();
 	}
 	
-	function loadList($userId, $strict=true) {
+	function loadList($userId = null, $strict = true) {
         $sqlCommon = 'FROM '.$this->gTable().' AS pp '
             .'INNER JOIN '.$this->gTable('projectStatus').' AS ps ON ps.projectId = pp.projectId '
             .(($strict)?'INNER':'LEFT').' JOIN '.$this->gTable('memberProject')
@@ -360,7 +376,7 @@ class MemberProject extends TznDb
 
     function checkRights($level) {
         $level--;
-        return ($GLOBALS['confProjectRights'][$this->position]{$level} == '1');
+        return ($GLOBALS['confProjectRights'][$this->position][$level] == '1');
     }
 
     function loadPosition($projectId,$memberId) {
@@ -369,7 +385,7 @@ class MemberProject extends TznDb
 			.' AND '.$table.'.memberId='.$memberId);
     }
 	
-	function add() {
+	function add($ignore = false) {
 		if (!$this->project->id || !$this->member->id) {
 			return false;
 		}
@@ -384,12 +400,12 @@ class MemberProject extends TznDb
 		}
 	}
 	
-	function update($fields=null) {
+	function update($fields = null, $filter = null) {
 		parent::update($fields,'projectId='.$this->project->id
 			.' AND memberId='.$this->member->id);
 	}
 	
-	function delete() {
+	function delete($filter = null) {
 		if ($this->project->id && $this->member->id) {
 			$this->getConnection();
 			return $this->query('DELETE FROM '.$this->gTable()
@@ -427,7 +443,7 @@ class Member extends TznUser
 
     function checkLevel($level) {
         $level--;
-        return ($GLOBALS['confGlobalRights'][$this->level]{$level} == '1');
+        return ($GLOBALS['confGlobalRights'][$this->level][$level] == '1');
     }
 	
 	function getShortName($default='') {
@@ -510,7 +526,7 @@ class Member extends TznUser
 		}
 	}
 
-    function delete() {
+    function delete($filter = null) {
         if ($this->id) {
 			// 1. delete member
 			if (parent::delete()) {

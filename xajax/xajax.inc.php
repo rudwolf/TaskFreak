@@ -1009,7 +1009,7 @@ class xajax
 	 */
 	function _wrap($sFunction,$sRequestType=XAJAX_POST)
 	{
-		$js = "function ".$this->sWrapperPrefix."$sFunction(){return xajax.call(\"$sFunction\", arguments, ".$sRequestType.");}\n";		
+		$js = "function ".$this->sWrapperPrefix."$sFunction()[return xajax.call(\"$sFunction\", arguments, ".$sRequestType.");]\n";		
 		return $js;
 	}
 

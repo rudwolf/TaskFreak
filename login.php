@@ -23,18 +23,25 @@
 * along with this program; if not, write to the Free Software                *
 * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA *
 \****************************************************************************/
+$pPageIsPublic = true;
+
+// Load language file
+$langUser = $GLOBALS['langUser'] ?? [];
 
 $pPageIsPublic = true;
+$pErrorMessage = '';
+$pJSonLoad = '';
+$pPageTitle = $langUser['login'];
+
 include '_common.php';
 
-$pRef = '';
-if ($_REQUEST['ref']) {
-	$pRef = $_REQUEST['ref'];
-} else if (!preg_match('/(index|register|registered|log(in|out))\.php/',$_SERVER['HTTP_REFERER'])) {
-	$pRef = $_SERVER['HTTP_REFERER'];
+$ref = $_REQUEST['ref'] ?? '';
+if (empty($ref)) {
+  $ref = $_SERVER['HTTP_REFERER'] ?? '';
+  if (preg_match('/login/', $ref)) { $ref = 'index.php'; }
 }
 
-if ($_REQUEST['forgot']) {
+if (isset($_REQUEST['forgot']) && $_REQUEST['forgot']) {
 	Tzn::redirect('user_password.php?username='.urlencode(Tzn::getHttp($_REQUEST['username'])));
 }
 
@@ -43,8 +50,8 @@ if (isset($_POST["username"])) {
         if (@constant('PRJ_AUTO_LOGIN') && $_POST['remember']) {
             $objUser->setAutoLogin();
         }
-		if ($pRef) {
-			Tzn::redirect($pRef);
+		if ($ref) {
+			Tzn::redirect($ref);
 		} else {
 			Tzn::redirect('index.php');
 		}
@@ -71,7 +78,7 @@ include PRJ_INCLUDE_PATH.'html/header.php';
         <table cellpadding="3" cellspacing="0" border="0" align="center">
             <tr>
                 <th><?php echo $langUser[TZN_USER_LOGIN]; ?>:</th>
-                <td><?php Tzn::qText('username',$_REQUEST['username'],'width:130px'); ?></td>
+                <td><?php $objUser->qText('username', $_REQUEST['username'] ?? '', 'width:130px'); ?></td>
             </tr>
             <tr>
                 <th><?php echo $langUser['password']; ?>:</th>
@@ -83,7 +90,7 @@ include PRJ_INCLUDE_PATH.'html/header.php';
             <tr>
                 <td colspan="2" align="center">
                     <?php 
-                        Tzn::qCheckBox('remember','','vertical-align:middle');
+                        $objUser->qCheckBox('remember','','vertical-align:middle');
                         echo '<label>'.$langUser['auto_login'].'</label>';
                     ?>
                 </td>

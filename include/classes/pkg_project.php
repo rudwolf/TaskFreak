@@ -46,7 +46,7 @@ class ItemStatus extends TznDb
 	}
 	
 
-    function add() {
+    function add($ignore = false) {
         if (!$this->statusDate) {
             $this->setDtm('statusDate','NOW');
         }
@@ -149,7 +149,10 @@ class Item extends TznDb
 		}
 	}
 
-	function loadList($sql='') {
+	function loadList($sql1='',$sql2='') {
+		if ($sql1 !== null && $sql2 === null && is_string($sql1)) {
+			$sql = $sql1;
+		}
 		if ($sql) {
 			return parent::loadList(TZN_DB_COUNT_OFF,$sql);
 		} else {
@@ -183,7 +186,7 @@ class Item extends TznDb
 		}
 	}
 
-	function delete() {
+	function delete($filter = null) {
 		if (parent::delete()) {
 			$this->query('DELETE FROM '.$this->gTable('itemStatus').' WHERE itemId='.$this->id);
 			$this->query('DELETE FROM '.$this->gTable('itemComment').' WHERE itemId='.$this->id);
@@ -298,7 +301,7 @@ class ItemStats extends Item
             return true;
         } else if ($level) {
             $level--;
-            return ($GLOBALS['confProjectRights'][$this->position]{$level} == '1');
+            return ($GLOBALS['confProjectRights'][$this->position][$level] == '1');
         } else {
             return (intval($this->position) > 0);
         }
@@ -315,17 +318,17 @@ class ItemStats extends Item
         unset($this->position);
     }
 
-    function add() {
+    function add($ignore = false) {
         $this->_cleanProperties();
         parent::add();
     }
 	
-    function update($param='') {
+    function update($param='',$filter=null) {
         $this->_cleanProperties();
         parent::update($param);
     }
 
-	function load($userId) {
+	function load($userId=null,$filter=null) {
 		if (!$this->id) {
 			return false;
 		}
@@ -380,7 +383,7 @@ class ItemStats extends Item
 		}
 	}
 	
-	function loadList($userId=0) {
+	function loadList($userId=0,$filter=null) {
 		$sql = 'SELECT ii.*, ';
         if (@constant('FRK_MYSQL_VERSION_GT_4_1')) {
 			$sql .= 'count(iic.postDate) as itemCommentCount, '
@@ -464,18 +467,18 @@ class ItemComment extends TznDb
             return true;
         } else if ($level) {
             $level--;
-            return ($GLOBALS['confProjectRights'][$objTask->position]{$level} == '1');
+            return ($GLOBALS['confProjectRights'][$objTask->position][$level] == '1');
 		} else {
 			return false;
 		}
     }
 	
-	function add() {
+	function add($ignore = false) {
 		$this->setDtm('postDate','NOW');
 		return parent::add();
 	}
 	
-	function update() {
+	function update($fields = null, $filter = null) {
 		$this->setDtm('lastChangeDate','NOW');
 		return parent::update();
 	}
@@ -505,7 +508,7 @@ class ItemCommentFull extends ItemComment
 		));
 	}
 	
-	function loadList() {
+	function loadList($sql1=null,$sql2=null) {
 		$sql = 'SELECT iic.*, mm.username as member_username, mm.timeZone as member_timeZone,'
 			.'mm.creationDate as member_creationDate, mm.firstName as member_firstName, '
 			.'mm.middleName as member_middleName, mm.lastName as member_lastName, '

@@ -217,7 +217,7 @@ EOS;
 		$this->update("username, password, salt, lastChangeDate");
 	}
 
-	function add() {
+	function add($ignore = false) {
 		$this->setDtm('creationDate','NOW');
 		return parent::add();
 	}
@@ -226,7 +226,7 @@ EOS;
         return $this->update("level,lastChangeDate");
 	}
 
-    function update($fields=null) {
+    function update($fields = null, $filter = null) {
         $this->setDtm('lastChangeDate','NOW');
         if ($fields && (!preg_match('/lastChangeDate/',$fields))) {
         	$fields .= ",lastChangeDate";
@@ -418,7 +418,7 @@ EOS;
 
 
 	function checkAutoLogin($forReal=true) {
-        $cookieVal = $_COOKIE['autoLogin'];
+        $cookieVal = $_COOKIE['autoLogin'] ?? null;
 		if (empty($cookieVal)) {
 			return false;
 		}
@@ -479,7 +479,7 @@ EOS;
     }
 
     function isLogged($level=null) {
-        $lUserId = $_SESSION['tznUserId'];
+        $lUserId = $_SESSION['tznUserId'] ?? null;
         if ($lUserId == 0 || empty($lUserId) || $this->_logingOut) {
             return false;
         } else {

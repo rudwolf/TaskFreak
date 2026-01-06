@@ -23,6 +23,9 @@
 * along with this program; if not, write to the Free Software                *
 * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA *
 \****************************************************************************/
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+include 'debug.php';
 
 $pPageIsPublic = false;
 include '_common.php';

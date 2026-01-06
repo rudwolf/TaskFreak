@@ -7,6 +7,15 @@
 * Authors: Stan Ozier <taskfreak@gmail.com>                                  *
 * License:  http://www.gnu.org/licenses/gpl.txt (GPL)                        *
 \****************************************************************************/
+$pPageTitle = $pPageTitle ?? '';
+$pUserIsLogged = $pUserIsLogged ?? false;
+$pJScript = $pJScript ?? '';
+$pJScalendar = $pJScalendar ?? false;
+$pJSxajax = $pJSxajax ?? false;
+$pCss = $pCss ?? '';
+$pJSonDown = $pJSonDown ?? '';
+$pErrorMessage = $pErrorMessage ?? '';
+
 ?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
@@ -73,7 +82,7 @@ if ($pJScalendar) {
         echo '<script>';
         foreach($arrCalendar as $value) {
             $value=trim($value);
-            $pJSonLoad .= "Calendar.setup({inputField : '${value}_d',button : '${value}_b'});";
+            $pJSonLoad .= "Calendar.setup({inputField : '$[value]_d',button : '$[value]_b'});";
         }
         echo '</script>';
     } else {
