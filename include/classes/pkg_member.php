@@ -515,8 +515,6 @@ class Member extends TznUser
         } else {
             $check5 = true;
         }
-
-		//var_dump($check1,$check2,$check3,$check4,$check5);
 		
 		if ($check1 && $check2 && $check3 && $check4 && $check5) {
 			return true;

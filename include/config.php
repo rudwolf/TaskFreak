@@ -17,7 +17,7 @@ define('TZN_DB_CLASS','tzn_mysql.php');
 
 error_reporting(E_ALL ^ E_NOTICE ^ E_DEPRECATED);
 
-define('TZN_DB_DEBUG',0);
+define('TZN_DB_DEBUG',2);
 define('TZN_DB_PERMANENT',0);
 
 define('TZN_DEBUG',1);

@@ -165,7 +165,15 @@ class TznDbConnection
 
     function querySelect($qry)
     {
-        return new TznDbResult($qry, $this->_dbLink->query($qry), $this->_critical);
+        // REFACTOR: execute the query here directly using the connection object
+        if ($this->isConnected()) {
+            $result = $this->_dbLink->query($qry);
+            return $result;
+        } else {
+            echo ("not connected to database");
+            exit;
+            return false;
+        }
     }
 
     function queryAffect($qry)
@@ -222,42 +230,65 @@ class TznDbResult
     var $_count;
     var $_idx;
 
-    function TznDbResult($qry, $result = null, $critical = true)
+    function __construct($qry, $result = null, $critical = true)
     {
-        if ($result) {
-            if (TZN_DB_DEBUG == 3) {
-                echo "<code>" . htmlspecialchars($qry) . "</code><br/>";
-            }
-            $this->_dbResult = $result;
-            $this->_count = $result->num_rows;
-            $this->_idx = 0;
-            return $this->_count;
-        } else {
-            switch (TZN_DB_DEBUG) {
-                case 3:
-                case 2:
-                    $strError = '<code>' . htmlspecialchars($qry) . '</code><br/>';
-                case 1:
-                    $this->_error['db'] = 'Error SQL #' . mysqli_errno() . ': ' . mysqli_error();
-                    $strError .= $this->_error['db'];
-                default:
-                    if ($critical) {
-                        if (
-                            defined("TZN_DB_ERROR_PAGE") &&
-                            (constant("TZN_DB_ERROR_PAGE"))
-                        ) {
-                            $_REQUEST['tznMessage'] = 'SQL Error (select)<br />'
-                                . $strError;
-                            include TZN_DB_ERROR_PAGE;
-                            exit;
+        try {
+            if ($result) {
+                if (TZN_DB_DEBUG == 3) {
+                    echo "<code>" . htmlspecialchars($qry) . "</code><br/>";
+                }
+                $this->_dbResult = $result;
+                $this->_count = $result->num_rows;
+                $this->_idx = 0;
+                return $this->_count;
+            } else {
+                switch (TZN_DB_DEBUG) {
+                    case 3:
+                    case 2:
+                        if ($qry instanceof TznDbResult || is_object($qry)) {
+                            // convert $qry from object to json string
+                            $strError = '<code>Object TznDbResult</code><br/>';
+                            $strError .= '<code>' . htmlspecialchars(json_encode($qry)) . '</code><br/>';
                         } else {
-                            die('<div id="debug">SQL error (select)<br />' . $strError . '</div>');
+                            $strError = 'Qry Error';
+                            $strError .= '<code>' . htmlspecialchars($qry) . '</code><br/>';
                         }
-                    }
-                    break;
+                        include TZN_DB_ERROR_PAGE;
+                        break;
+                    case 1:
+                        $this->_error['db'] = 'Error SQL #' . mysqli_errno() . ': ' . mysqli_error();
+                        $strError .= $this->_error['db'];
+                        include TZN_DB_ERROR_PAGE;
+                        break;
+                    default:
+                        if ($critical) {
+                            if (
+                                defined("TZN_DB_ERROR_PAGE") &&
+                                (constant("TZN_DB_ERROR_PAGE"))
+                            ) {
+                                $_REQUEST['tznMessage'] = 'SQL Error (select)<br />'
+                                    . $strError;
+                                include TZN_DB_ERROR_PAGE;
+                                exit;
+                            } else {
+                                die('<div id="debug">SQL error (select)<br />' . $strError . '</div>');
+                            }
+                        }
+                        break;
+                }
+                return false;
+            }
+        } catch (mysqli_sql_exception $e) {
+            if ($critical) {
+                die('SQL Exception: ' . $e->getMessage());
             }
             return false;
         }
+    }
+
+    function TznDbResult($qry, $result = null, $critical = true)
+    {
+        $this->__construct($qry, $result = null, $critical = true);
     }
 
     function rCount()
@@ -267,15 +298,15 @@ class TznDbResult
 
     function rNext()
     {
-        if (!$this->_result) {
+        if (!$this->_dbResult) {
             return false;
         }
 
-        if (!($this->_result instanceof mysqli_result)) {
+        if (!($this->_dbResult instanceof mysqli_result)) {
             return false;
         }
 
-        $this->_current = mysqli_fetch_object($this->_result);
+        $this->_current = mysqli_fetch_object($this->_dbResult);
 
         if ($this->_current) {
             $this->_total++;
@@ -570,11 +601,15 @@ class TznDb extends Tzn
         $this->_data = null;
         $this->_total = 0;
 
-        if (!$this->_dbLink) {
+        if (!isset($this->_dbLink) || !$this->_dbLink) {
             $this->_dbLink = $this->getConnection();
         }
 
-        $result = $this->_dbLink->querySelect($strSql);
+        if (method_exists($this->_dbLink, 'querySelect')) {
+            $result = $this->_dbLink->querySelect($strSql);
+        } else {
+            return false;
+        }
 
         if (!$result) {
             $this->_loaded = false;
@@ -585,12 +620,15 @@ class TznDb extends Tzn
             return false;
         }
 
-        $objResult = new TznDbResult($result);
+        $objResult = new TznDbResult($strSql,$result);
 
         while ($objResult->rNext()) {
             $this->_data[] = $objResult->_current;
         }
 
+        if (!is_array($this->_data)) {
+            $this->_data = array();
+        }
         $this->_total = count($this->_data);
         $this->_loaded = true;
 
@@ -763,7 +801,7 @@ class TznDb extends Tzn
         if ($strSql) {
             $this->getConnection();
             if ($result = $this->query($strSql)) {
-                if ($data = $result->rNext()) {
+                if ($data = $this->_data[0]) {
                     $this->setAuto($data);
                     $this->_loaded = true;
                     if ($this->id) {
