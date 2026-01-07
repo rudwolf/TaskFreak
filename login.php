@@ -31,7 +31,11 @@ $langUser = $GLOBALS['langUser'] ?? [];
 $pPageIsPublic = true;
 $pErrorMessage = '';
 $pJSonLoad = '';
-$pPageTitle = $langUser['login'];
+if (isset($langUser['login'])) {
+    $pPageTitle = $langUser['login'];
+} else {
+    $pPageTitle = 'Login';
+}
 
 include '_common.php';
 

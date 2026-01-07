@@ -84,7 +84,7 @@ class Project extends TznDb
 			'id'	 			=> 'UID',
 			'name'				=> 'STR',
 			'description'		=> 'BBS'
-		));
+		)); 
 	}
 	
 	function setStatus($status,$userId) {
@@ -418,7 +418,7 @@ class MemberProject extends TznDb
 
 }
 
-class Member extends TznUser 
+class Member extends TznUser
 {
 
 	function Member() {

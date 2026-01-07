@@ -8,17 +8,16 @@
 * License:  http://www.gnu.org/licenses/gpl.txt (GPL)                        *
 \****************************************************************************/
 
-define('TZN_DB_HOST','localhost');
-define('TZN_DB_USER','hardmagi_wp');       // edit here
-define('TZN_DB_PASS','TDv;vb!MN)X;');           // edit here
-define('TZN_DB_BASE','hardmagi_wp');  // edit here
+define('TZN_DB_HOST','mariadb');
+define('TZN_DB_USER','freak');
+define('TZN_DB_PASS','freak');
+define('TZN_DB_BASE','freak');
 define('TZN_DB_PREFIX','frk');
 define('TZN_DB_CLASS','tzn_mysql.php');
 
 error_reporting(E_ALL ^ E_NOTICE ^ E_DEPRECATED);
 
-
-define('TZN_DB_DEBUG',3);
+define('TZN_DB_DEBUG',0);
 define('TZN_DB_PERMANENT',0);
 
 define('TZN_DEBUG',1);
@@ -76,8 +75,8 @@ define('PRJ_WWW_URL','http://'.$_SERVER['SERVER_NAME'].dirname($_SERVER['PHP_SEL
 
 // === TASKFREAK CUSTOMIZATION ================================
 
-define('FRK_VERSION','0.8.0');
-define('FRK_VERSION_RELEASE','2010-06-27');
+define('FRK_VERSION','0.9.0');
+define('FRK_VERSION_RELEASE','January 2025');
 
 define('FRK_MYSQL_VERSION_GT_4_1',TRUE);
 
@@ -207,3 +206,17 @@ $GLOBALS['confGlobalRights'] = array(
 // misc #2 : 14:edit any task, 15:system settings
 
 define('FRK_PROJECT_LEADER',count($GLOBALS['confProjectRights']) - 1); // don't touch this
+
+if (file_exists(PRJ_INCLUDE_PATH . 'config_date.php')) {
+    require_once PRJ_INCLUDE_PATH . 'config_date.php';
+} else {
+    // Fallback if config_date.php doesn't exist
+    if (!defined("TZN_DATETIME_SQL")) {
+        define("TZN_DATETIME_SQL", "%Y-%m-%d %H:%M:%S");
+    }
+    if (TZN_DATE_US_FORMAT) {
+        define("TZN_DATE_FRM", "%m/%d/%y");
+    } else {
+        define("TZN_DATE_FRM", "%d/%m/%y");
+    }
+}

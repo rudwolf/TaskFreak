@@ -267,13 +267,22 @@ class TznDbResult
 
     function rNext()
     {
-        $row = @mysqli_fetch_object($this->_dbResult);
-        if (!$row) {
-            // $this->freeResult();
+        if (!$this->_result) {
             return false;
         }
-        $this->_idx++;
-        return $row;
+
+        if (!($this->_result instanceof mysqli_result)) {
+            return false;
+        }
+
+        $this->_current = mysqli_fetch_object($this->_result);
+
+        if ($this->_current) {
+            $this->_total++;
+            return true;
+        }
+
+        return false;
     }
 
     function rColumns()
@@ -521,7 +530,7 @@ class TznDb extends Tzn
     var $_sqlHaving;
     var $_sqlOrder;
 
-    function TznDb($table)
+    function __construct($table)
     {
         $this->Tzn();
         $this->_table = $table;
@@ -556,23 +565,36 @@ class TznDb extends Tzn
         return $this->_dbConnection;
     }
 
-    function query($qry)
+    function query($strSql)
     {
-        global $pSqlQueryCount;
-        $pSqlQueryCount++;
-        define('DB_DEBUG_LEVEL', defined('TZN_DB_DEBUG') ? TZN_DB_DEBUG : 0);
-        if (DB_DEBUG_LEVEL == 3) {
-            echo "<code>" . $qry . "</code><br/>";
+        $this->_data = null;
+        $this->_total = 0;
+
+        if (!$this->_dbLink) {
+            $this->_dbLink = $this->getConnection();
         }
-        if (is_object($this->_dbConnection)) {
-            if (preg_match("/^(SELECT|SHOW)/", ltrim($qry))) {
-                return $this->_dbConnection->querySelect($qry);
-            } else {
-                return $this->_dbConnection->queryAffect($qry);
+
+        $result = $this->_dbLink->querySelect($strSql);
+
+        if (!$result) {
+            $this->_loaded = false;
+            if (defined('TZN_DB_DEBUG') && TZN_DB_DEBUG > 0) {
+                $error = $this->_dbLink->_error['db'] ?? 'Unknown query error';
+                error_log("Query failed: $strSql - Error: $error");
             }
-        } else {
-            echo "no active connection to database - please call $db-&gt;getConnection first";
+            return false;
         }
+
+        $objResult = new TznDbResult($result);
+
+        while ($objResult->rNext()) {
+            $this->_data[] = $objResult->_current;
+        }
+
+        $this->_total = count($this->_data);
+        $this->_loaded = true;
+
+        return $this->_total;
     }
 
     function isLoaded()
